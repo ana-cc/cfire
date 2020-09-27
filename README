@@ -1,0 +1,4 @@
+
+### CFire - Hellfire written in C
+
+This will eventually become a paralelised DNS resolved that calls Canid to create input lists for various network measurement tools.
