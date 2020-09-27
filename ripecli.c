@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "cJSON.h"
 
 #include <curl/curl.h>
 
@@ -61,9 +62,29 @@ main(int argc, char **argv) {
 
 	ripe_lookup(argv[1], &chunk);
 
-	for (int i = 0; i < chunk.size; i++)
-		putchar(chunk.response[i]);
+	cJSON *result = cJSON_CreateObject();
+	cJSON_AddStringToObject(result, "ip", argv[1]);
 
+	cJSON *json = cJSON_Parse(chunk.response);
+	cJSON *data = cJSON_GetObjectItemCaseSensitive(json, "data");
+	cJSON *asns = cJSON_GetObjectItemCaseSensitive(data, "asns");
+	const cJSON *a = NULL;
+
+	cJSON_ArrayForEach(a, asns){
+		cJSON *asn = cJSON_GetObjectItemCaseSensitive(a, "asn");
+		if (cJSON_IsNumber(asn) && (asn->valueint != 0)) {
+			cJSON_AddNumberToObject(result, "asn", asn->valueint );
+		}
+		cJSON *holder = cJSON_GetObjectItemCaseSensitive(a, "holder");
+
+		if (cJSON_IsString(holder) && (holder->valuestring != NULL)) {
+			cJSON_AddStringToObject(result, "holder", holder->valuestring );
+		}
+
+		printf("%s\n", cJSON_Print(result));
+	}
+	cJSON_Delete(json);
+	cJSON_Delete(result);
 	free(chunk.response);
 
 	return 0;
